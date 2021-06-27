@@ -66,7 +66,7 @@ except KeyboardInterrupt:
 
 #Clientモードの処理
 if mode == "2":
-    init_msg = "Sourte_IP:" + Src_ip +  "\nSource_Port:" + S_port + "\nDest_IP:" + Dest_ip + "\nDest_port:" + D_port
+    init_msg = "Source_IP:" + Src_ip +  "\nSource_Port:" + S_port + "\nDest_IP:" + Dest_ip + "\nDest_port:" + D_port
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((Src_ip,int(S_port)))  # IPとポート番号を指定します
@@ -128,7 +128,7 @@ if mode == "1":
             if decode_data != "" and decode_data[:3] != "TCP":
                 print(f">>",decode_data)
 
-            #ping メッセージがきたらReplyを返す
+            #TCP recieved メッセージがきたらReplyを返す
             if decode_data[:3] == "TCP":
                 print(decode_data)
 
