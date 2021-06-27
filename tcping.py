@@ -79,13 +79,14 @@ if mode == "2":
     if response.decode('utf-8') == "ack":
         try:
             while True:
-            
                 x =input(">>")
-                if x != "" and x != "bye" and x != "ping":
-                    s.send(bytes(x,'utf-8'))
-                elif x == "bye":
+
+                #byeを入力した場合は終了する
+                if x == "bye":
                     s.send(bytes(x,'utf-8'))
                     break
+
+                #pingを入力した場合はpingモードに移行
                 elif x == "ping":
                     try:
                         while True:
@@ -96,10 +97,24 @@ if mode == "2":
 
                             response = s.recv(1024)
                             print(response.decode('utf-8'))
-
                             time.sleep(1)
                     except KeyboardInterrupt:
                         pass
+                
+                #CONを入力した場合はコネクション情報を取得する
+                elif x == "CON":
+                    s.send(bytes(x,'utf-8'))
+                    response = s.recv(1024)
+                    Send_MSG = "ローカルコネクション情報\nサーバーIPアドレス:" + str(Dest_ip) + "\nサーバー待ち受けport:" + str(D_port) + \
+                    "\nクライアントIPアドレス:" + str(Src_ip) + "\nクライアント送信元port:" + str(S_port) + \
+                    "\n\n======================================\n\n" +  response.decode('utf-8')
+                    print(Send_MSG)
+
+                #それ以外はメッセージモードとして処理
+                elif x != "":
+                    s.send(bytes(x,'utf-8'))
+                
+                Send_MSG =""
 
         except KeyboardInterrupt:
             s.send(bytes("bye",'utf-8'))
@@ -124,23 +139,31 @@ if mode == "1":
             client_data = clientsocket.recv(1024)
             decode_data = client_data.decode('utf-8')
 
-            #メッセージモードの処理
-            if decode_data != "" and decode_data[:3] != "TCP":
-                print(f">>",decode_data)
-
-            #TCP recieved メッセージがきたらReplyを返す
-            if decode_data[:3] == "TCP":
-                print(decode_data)
-
-                now = datetime.datetime.now()
-                Reply_MSG = "TCP Reply " + str(now.time())
-                clientsocket.send(bytes(Reply_MSG,'utf-8'))
-
             #bye メッセージがきたら終了
             if decode_data == "bye":
                 print("ClientからByeが入力されました")
                 clientsocket.close()
                 ServerFlg = "1"
                 break
+            #メッセージモードの処理
+
+            #TCP recieved メッセージがきたらReplyを返す
+            elif decode_data[:3] == "TCP":
+                print(decode_data)
+                now = datetime.datetime.now()
+                Reply_MSG = "TCP Reply " + str(now.time())
+                clientsocket.send(bytes(Reply_MSG,'utf-8'))
+            
+            #GET メッセージがきた場合はサーバーのLocal情報を返す
+            elif decode_data[:3] == "CON":
+                Send_MSG = "リモートコネクション情報\nサーバーIPアドレス:" + str(Src_ip) + "\nサーバー待ち受けport:" + str(S_port) + \
+                    "\nクライアントIPアドレス:" + str(address[0]) + "\nクライアント送信元port:" + str(address[1])
+                clientsocket.send(bytes(Send_MSG,'utf-8'))
+ 
+            elif decode_data != "":
+                print(f">>",decode_data)
+
+            Send_MSG = ""
+
         if ServerFlg == "1":
             break
