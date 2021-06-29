@@ -7,7 +7,7 @@ import datetime
 PCIP = socket.gethostbyname(socket.gethostname())
 # print(Srcip) # 192.168.○○○.○○○
 InFlg = 0
-1
+
 #### オプションの設定
 try:
     while True:
@@ -19,7 +19,7 @@ try:
 
         #ソースIPを指定、表示されたIPのままでOKならEnter
         if InFlg == 1:
-            Sip=input(f"Source IP [{PCIP}]? or type:")
+            Sip=input(f"Source IP [{PCIP}]? or typing")
             if Sip == "":
                 Src_ip = PCIP
                 InFlg += 1
@@ -66,7 +66,7 @@ except KeyboardInterrupt:
 
 #Clientモードの処理
 if mode == "2":
-    init_msg = "Source_IP:" + Src_ip +  "\nSource_Port:" + S_port + "\nDest_IP:" + Dest_ip + "\nDest_port:" + D_port
+    init_msg = "クライアントのコネクション情報\nSource_IP:" + Src_ip +  "\nSource_Port:" + S_port + "\nDest_IP:" + Dest_ip + "\nDest_port:" + D_port
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((Src_ip,int(S_port)))  # IPとポート番号を指定します
@@ -91,12 +91,14 @@ if mode == "2":
                     try:
                         while True:
                             #送信メッセージにタイムスタンプを付与する
-                            now = datetime.datetime.now()
+                            now = datetime.datetime.now(datetime.timezone.utc)
                             Send_MSG = "TCP recieved " + str(now.time())
                             s.send(bytes(Send_MSG,'utf-8'))
 
                             response = s.recv(1024)
-                            print(response.decode('utf-8'))
+                            now2 = datetime.datetime.now(datetime.timezone.utc)
+                            delta = now2 - now
+                            print(response.decode('utf-8'),delta.seconds , "." ,str(delta.microseconds//1000).zfill(3),"秒")
                             time.sleep(1)
                     except KeyboardInterrupt:
                         pass
@@ -105,8 +107,8 @@ if mode == "2":
                 elif x == "CON":
                     s.send(bytes(x,'utf-8'))
                     response = s.recv(1024)
-                    Send_MSG = "ローカルコネクション情報\nサーバーIPアドレス:" + str(Dest_ip) + "\nサーバー待ち受けport:" + str(D_port) + \
-                    "\nクライアントIPアドレス:" + str(Src_ip) + "\nクライアント送信元port:" + str(S_port) + \
+                    Send_MSG = "【ローカルコネクション情報】\nサーバーIPアドレス:\t" + str(Dest_ip) + "\nサーバー待ち受けport:\t" + str(D_port) + \
+                    "\nクライアントIPアドレス:\t" + str(Src_ip) + "\nクライアント送信元port:\t" + str(S_port) + \
                     "\n\n======================================\n\n" +  response.decode('utf-8')
                     print(Send_MSG)
 
@@ -126,6 +128,7 @@ if mode == "1":
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((Src_ip,int(S_port)))  # IPとポート番号を指定します
     s.listen(1)
+    print("waiting for connection...")
 
     while True:
         clientsocket, address = s.accept()
@@ -150,16 +153,17 @@ if mode == "1":
             #TCP recieved メッセージがきたらReplyを返す
             elif decode_data[:3] == "TCP":
                 print(decode_data)
-                now = datetime.datetime.now()
-                Reply_MSG = "TCP Reply " + str(now.time())
+                #now = datetime.datetime.now()
+                Reply_MSG = "TCP Reply "
                 clientsocket.send(bytes(Reply_MSG,'utf-8'))
             
-            #GET メッセージがきた場合はサーバーのLocal情報を返す
+            #CON メッセージがきた場合はサーバーのLocal情報を返す
             elif decode_data[:3] == "CON":
-                Send_MSG = "リモートコネクション情報\nサーバーIPアドレス:" + str(Src_ip) + "\nサーバー待ち受けport:" + str(S_port) + \
-                    "\nクライアントIPアドレス:" + str(address[0]) + "\nクライアント送信元port:" + str(address[1])
+                Send_MSG = "【リモートコネクション情報】\nサーバーIPアドレス:\t" + str(Src_ip) + "\nサーバー待ち受けport:\t" + str(S_port) + \
+                    "\nクライアントIPアドレス:\t" + str(address[0]) + "\nクライアント送信元port:\t" + str(address[1])
                 clientsocket.send(bytes(Send_MSG,'utf-8'))
  
+            #その他のメッセージが来た場合は表示させる
             elif decode_data != "":
                 print(f">>",decode_data)
 
