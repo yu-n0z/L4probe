@@ -3,6 +3,24 @@ import sys
 import time
 import datetime
 
+Software_version = '\
+        \n\t\t=================================================================\n\
+            \t| software version 1.00\t\t\t\t\t\t|\n\
+            \t| This software is a trial version.\t\t\t\t|\n\
+            \t| The trial period is until 2022/06/30.\t\t\t\t|\n\
+            \t=================================================================\n'
+                                                                                    
+#           \t| if the trial period expires, please purchase a license.\t|\n\
+
+
+command_help = '\n\ncommand list\n\
+    ping\t...Continuous packet transmission\n\
+    CON\t\t...connection info\n\
+    bye\t\t...quit application\n'
+
+
+print(Software_version)
+
 # ipアドレスを取得
 PCIP = socket.gethostbyname(socket.gethostname())
 # print(Srcip) # 192.168.○○○.○○○
@@ -86,8 +104,9 @@ if mode == "2":
                     s.send(bytes(x,'utf-8'))
                     break
 
-                #pingを入力した場合はpingモードに移行
+                #pingを入力した場合はpingモードに移行1
                 elif x == "ping":
+                    print("\n\nCTRL + C for escaping\n")
                     try:
                         while True:
                             #送信メッセージにタイムスタンプを付与する
@@ -111,6 +130,10 @@ if mode == "2":
                     "\nクライアントIPアドレス:\t" + str(Src_ip) + "\nクライアント送信元port:\t" + str(S_port) + \
                     "\n\n======================================\n\n" +  response.decode('utf-8')
                     print(Send_MSG)
+
+                #?を入力した場合はcommand help を表示
+                elif x == "?":
+                    print(command_help)
 
                 #それ以外はメッセージモードとして処理
                 elif x != "":
