@@ -14,9 +14,11 @@ Software_version = '\
 
 
 command_help = '\n\ncommand list\n\
-    ping\t...Continuous packet transmission\n\
-    CON\t\t...connection info\n\
-    bye\t\t...quit application\n'
+    ping\t\t...Continuous Packet Transmission\n\
+    CON\t\t\t...Connection Info\n\
+    CHANGE <port>\t...Change Server Port\n\
+    CLOSE\t\t...Close the session while leaving the listening port\n\
+    BYE\t\t\t...Quit Application\n'
 
 
 print(Software_version)
@@ -100,9 +102,21 @@ if mode == "2":
                 x =input(">>")
 
                 #byeを入力した場合は終了する
-                if x == "bye":
+                if x == "BYE":
                     s.send(bytes(x,'utf-8'))
                     break
+
+                #CHANGEポートの処理
+                elif x[:6] == "CHANGE":
+                    CHANGE_MSG = x.split()
+                    if len(CHANGE_MSG) == 2:
+                        if 1 <= int(CHANGE_MSG[1]) <= 65536:
+                            s.send(bytes(x,'utf-8'))
+                            response = s.recv(1024)
+                            print(">>",response.decode('utf-8'))
+                            s.close()
+                            break
+ 
 
                 #pingを入力した場合はpingモードに移行1
                 elif x == "ping":
@@ -125,11 +139,21 @@ if mode == "2":
                 #CONを入力した場合はコネクション情報を取得する
                 elif x == "CON":
                     s.send(bytes(x,'utf-8'))
+                    time.sleep(1)
                     response = s.recv(1024)
                     Send_MSG = "【ローカルコネクション情報】\nサーバーIPアドレス:\t" + str(Dest_ip) + "\nサーバー待ち受けport:\t" + str(D_port) + \
                     "\nクライアントIPアドレス:\t" + str(Src_ip) + "\nクライアント送信元port:\t" + str(S_port) + \
                     "\n\n======================================\n\n" +  response.decode('utf-8')
                     print(Send_MSG)
+
+                elif x == "CLOSE":
+                    s.send(bytes(x,'utf-8'))
+                    time.sleep(1)
+                    response = s.recv(1024)
+                    s.close()
+                    break
+  
+
 
                 #?を入力した場合はcommand help を表示
                 elif x == "?":
@@ -138,6 +162,8 @@ if mode == "2":
                 #それ以外はメッセージモードとして処理
                 elif x != "":
                     s.send(bytes(x,'utf-8'))
+                    response = s.recv(1024)
+                    print(">>",response.decode('utf-8'))
                 
                 Send_MSG =""
 
@@ -149,6 +175,7 @@ if mode == "1":
     init_msg = "Source_IP:" + Src_ip + "\nSource_port:" + S_port
     ServerFlg = 0
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.bind((Src_ip,int(S_port)))  # IPとポート番号を指定します
     s.listen(1)
     print("waiting for connection...")
@@ -166,13 +193,39 @@ if mode == "1":
             decode_data = client_data.decode('utf-8')
 
             #bye メッセージがきたら終了
-            if decode_data == "bye":
+            if decode_data == "BYE":
                 print("ClientからByeが入力されました")
                 clientsocket.close()
                 ServerFlg = "1"
                 break
-            #メッセージモードの処理
+            
+            #CHANGEポートの処理
+            elif decode_data[:6] == "CHANGE":
+                change_port = decode_data.split()
+                if len(change_port) == 2:
+                    if 1 <= int(change_port[1]) <= 65536:
+                        #print(change_port[1])
+                        Reply_MSG = "change server port to " + str(change_port[1])
+                        
+                        clientsocket.send(bytes(Reply_MSG,'utf-8'))
+                        clientsocket.close()
+                        s = ""
 
+                        S_port = str(change_port[1])
+
+                        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                        s.bind((Src_ip,int(S_port)))
+                        s.listen(1)
+                        print("waiting for connection",S_port)
+                        clientsocket, address = s.accept()
+                        clientsocket.send(bytes("ack", 'utf-8'))
+                        decode_data = ""
+
+                else:
+                    print(f">>",decode_data)
+                    clientsocket.send(bytes(Reply_MSG,'utf-8'))
+                
             #TCP recieved メッセージがきたらReplyを返す
             elif decode_data[:3] == "TCP":
                 print(decode_data)
@@ -186,9 +239,24 @@ if mode == "1":
                     "\nクライアントIPアドレス:\t" + str(address[0]) + "\nクライアント送信元port:\t" + str(address[1])
                 clientsocket.send(bytes(Send_MSG,'utf-8'))
  
+           #CLOSE メッセージが来た場合の処理
+            elif decode_data == "CLOSE":
+                print(">>connection close from clients")
+                Reply_MSG = "MSG Recieved"
+                clientsocket.send(bytes(Reply_MSG,'utf-8'))
+                clientsocket.close()
+                decode_data = ""
+                time.sleep(1)
+                print("waiting for connection",S_port)
+                clientsocket , address = s.accept()
+                clientsocket.send(bytes("ack", 'utf-8'))
+
+
             #その他のメッセージが来た場合は表示させる
             elif decode_data != "":
                 print(f">>",decode_data)
+                Reply_MSG = "MSG Recieved"
+                clientsocket.send(bytes(Reply_MSG,'utf-8'))
 
             Send_MSG = ""
 
