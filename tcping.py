@@ -5,7 +5,7 @@ import datetime
 
 Software_version = '\
         \n\t\t=================================================================\n\
-            \t| software version 1.00\t\t\t\t\t\t|\n\
+            \t| software version 1.01\t\t\t\t\t\t|\n\
             \t| This software is a trial version.\t\t\t\t|\n\
             \t| The trial period is until 2022/06/30.\t\t\t\t|\n\
             \t=================================================================\n'
@@ -204,15 +204,15 @@ if mode == "1":
                 change_port = decode_data.split()
                 if len(change_port) == 2:
                     if 1 <= int(change_port[1]) <= 65536:
-                        #print(change_port[1])
+                        #既存セッションの終了処理
                         Reply_MSG = "change server port to " + str(change_port[1])
-                        
                         clientsocket.send(bytes(Reply_MSG,'utf-8'))
-                        clientsocket.close()
+                        #クライアント側からのcloseを待つ
+                        time.sleep(1)
+
+                        #新規待ち受けポートを作成
                         s = ""
-
                         S_port = str(change_port[1])
-
                         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                         s.bind((Src_ip,int(S_port)))
