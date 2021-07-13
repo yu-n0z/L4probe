@@ -2,6 +2,7 @@ import socket
 import sys
 import time
 import datetime
+from typing import Protocol
 
 Software_version = '\
         \n\t\t=================================================================\n\
@@ -31,14 +32,19 @@ InFlg = 0
 #### オプションの設定
 try:
     while True:
-        #サーバーモードかクライアントモードを洗濯
+        #サーバーモードかクライアントモードを選択
         if InFlg == 0:
             mode =input("mode? [1:Server or 2:Clients]:")
             if mode == '1' or mode == '2':
                 InFlg += 1
+                
+        if InFlg == 1:
+            Proto =input("Protocol? [1:TCP or 2:UDP]:")
+            if Proto == '1' or Proto == '2':
+                InFlg += 1
 
         #ソースIPを指定、表示されたIPのままでOKならEnter
-        if InFlg == 1:
+        if InFlg == 2:
             Sip=input(f"Source IP [{PCIP}]? or typing")
             if Sip == "":
                 Src_ip = PCIP
@@ -48,7 +54,7 @@ try:
                 InFlg += 1
         
         #送信元ポートを指定
-        if InFlg == 2:
+        if InFlg == 3:
             x = input("Source Port?[1-65536]:")
             if x != "":
                 sp = int(x)
@@ -57,7 +63,7 @@ try:
                     InFlg += 1
         
         #宛先IPを入力する
-        if InFlg == 3 and mode == "2":
+        if InFlg == 4 and mode == "2":
             dip =input("Destination IP?")
             if dip != "":
                 Dest_ip = dip
@@ -68,7 +74,7 @@ try:
             break
 
         #宛先ポートを指定
-        if InFlg == 4 and mode == "2":
+        if InFlg == 5 and mode == "2":
             x=input("Destination Port?[1-65536]:")
             if x != "":
                 dp=int(x)
@@ -76,7 +82,7 @@ try:
                     D_port = str(dp)
                     InFlg+=1
 
-        if InFlg == 5:
+        if InFlg == 6:
             break
 except KeyboardInterrupt:
     print('\n終了')
@@ -84,8 +90,8 @@ except KeyboardInterrupt:
 
 # print(f"送信元IP{Src_ip}\n送信元ポート{S_port}\n宛先IP{Dest_ip}\n宛先ポート{D_port}")
 
-#Clientモードの処理
-if mode == "2":
+#TCP/Clientモードの処理
+if mode == "2" and Proto == "1":
     init_msg = "クライアントのコネクション情報\nSource_IP:" + Src_ip +  "\nSource_Port:" + S_port + "\nDest_IP:" + Dest_ip + "\nDest_port:" + D_port
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -153,8 +159,6 @@ if mode == "2":
                     s.close()
                     break
   
-
-
                 #?を入力した場合はcommand help を表示
                 elif x == "?":
                     print(command_help)
@@ -170,15 +174,17 @@ if mode == "2":
         except KeyboardInterrupt:
             s.send(bytes("bye",'utf-8'))
 
-#サーバーモードの処理
-if mode == "1":
+#===========================================================================
+
+#TCPサーバーモードの処理
+if mode == "1" and Proto == "1":
     init_msg = "Source_IP:" + Src_ip + "\nSource_port:" + S_port
     ServerFlg = 0
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     #s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.bind((Src_ip,int(S_port)))  # IPとポート番号を指定します
     s.listen(1)
-    print("waiting for connection...")
+    print("waiting for TCP connection...")
 
     while True:
         clientsocket, address = s.accept()
