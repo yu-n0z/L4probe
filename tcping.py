@@ -6,7 +6,7 @@ from typing import Protocol
 
 Software_version = '\
         \n\t\t=================================================================\n\
-            \t| software version 1.01\t\t\t\t\t\t|\n\
+            \t| software version 1.02\t\t\t\t\t\t|\n\
             \t| This software is a trial version.\t\t\t\t|\n\
             \t| The trial period is until 2022/06/30.\t\t\t\t|\n\
             \t=================================================================\n'
