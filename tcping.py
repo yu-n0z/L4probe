@@ -328,7 +328,7 @@ if mode == "2" and Proto == "2":
                     while True:
                         #送信メッセージにタイムスタンプを付与する
                         now = datetime.datetime.now(datetime.timezone.utc)
-                        Send_MSG = "TCP recieved " + str(now.time())
+                        Send_MSG = "UDP recieved " + str(now.time())
                         s.sendto(bytes(Send_MSG,'utf-8'),UDP_Dest)
 
                         response,UDP_Server = s.recvfrom(1024)
