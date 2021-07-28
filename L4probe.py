@@ -4,6 +4,7 @@ import time
 import datetime
 from typing import Protocol
 
+
 Software_version = '\
         \n\t\t=================================================================\n\
             \t| software version 1.02\t\t\t\t\t\t|\n\
