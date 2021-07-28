@@ -28,6 +28,7 @@ PCIP = socket.gethostbyname(socket.gethostname())
 # print(Srcip) # 192.168.○○○.○○○
 InFlg = 0
 
+
 #### オプションの設定
 try:
     while True:
